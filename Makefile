@@ -4,9 +4,9 @@ ifeq ($(CONTAINER_ENGINE),)
 $(error No container engine found — install Docker or Podman)
 endif
 
-# More targets (generate, build, test, lint) land in later tickets.
+# More targets (build, test, lint) land in later tickets.
 
-.PHONY: db-up db-down migrate-up migrate-down
+.PHONY: db-up db-down migrate-up migrate-down generate
 
 db-up:
 	$(CONTAINER_ENGINE) compose up -d
@@ -19,3 +19,6 @@ migrate-up:
 
 migrate-down:
 	set -a && . ./.env && set +a && go run ./cmd/migrate down
+
+generate:
+	sqlc generate

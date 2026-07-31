@@ -1,0 +1,11 @@
+DROP TABLE IF EXISTS fx_rates;
+DROP TABLE IF EXISTS transfers;
+DROP TABLE IF EXISTS statement_adjustments;
+DROP TABLE IF EXISTS transactions;
+DROP TABLE IF EXISTS statements;
+DROP TABLE IF EXISTS credit_cards;
+DROP TABLE IF EXISTS accounts;
+DROP TABLE IF EXISTS categories;
+DROP TABLE IF EXISTS household_members;
+DROP TABLE IF EXISTS households;
+DROP TABLE IF EXISTS users;

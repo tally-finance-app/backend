@@ -28,6 +28,11 @@ go.work.sum
 # env file
 .env
 
+# sqlc-generated code (regenerate with `make generate`) — hand-written tests
+# living alongside it are excluded from the ignore
+/internal/platform/postgres/generated/*
+!/internal/platform/postgres/generated/*_test.go
+
 # Editor/IDE
 # .idea/
 # .vscode/

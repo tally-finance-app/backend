@@ -5,6 +5,7 @@ go 1.26.5
 require (
 	github.com/golang-migrate/migrate/v4 v4.19.1
 	github.com/jackc/pgx/v5 v5.5.4
+	github.com/go-chi/chi/v5 v5.3.1
 )
 
 require (

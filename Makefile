@@ -117,8 +117,13 @@ test:
 
 # Everything, including repository-layer tests against real Postgres.
 # Run `make db-up && make migrate-up` first.
+#
+# -v is deliberate: DB-backed tests skip themselves when DATABASE_URL is unset,
+# and a skipped package still reports "ok". Without per-test output there is no
+# way to tell a passing integration test from one that silently skipped — which
+# would make this whole job green while proving nothing.
 test-integration:
-	$(DOTENV) go test $(GO_TEST_FLAGS) ./...
+	$(DOTENV) go test $(GO_TEST_FLAGS) -v ./...
 
 # What CI runs, so a green `make ci` locally means a green pipeline.
 ci: verify-generate build vet lint test

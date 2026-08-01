@@ -24,6 +24,12 @@ jobs:
       - name: Install dependencies
         run: go mod download
 
+      - name: Install sqlc
+        run: go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.31.1
+
+      - name: Generate sqlc code
+        run: sqlc generate
+
       - name: Build
         run: go build -v ./...
 
@@ -63,6 +69,12 @@ jobs:
 
       - name: Install dependencies
         run: go mod download
+
+      - name: Install sqlc
+        run: go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.31.1
+
+      - name: Generate sqlc code
+        run: sqlc generate
 
       - name: Run migrations
         run: make migrate-up

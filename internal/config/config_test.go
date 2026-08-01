@@ -1,0 +1,90 @@
+package config
+
+import (
+	"errors"
+	"log/slog"
+	"testing"
+)
+
+func setRequiredEnv(t *testing.T) {
+	t.Helper()
+	t.Setenv("DATABASE_URL", "postgres://tally:tally@localhost:5432/tally?sslmode=disable")
+	t.Setenv("FX_API_KEY", "test-key")
+	t.Setenv("FX_API_URL", "https://api.example.com/v1")
+}
+
+func TestLoad_HappyPath(t *testing.T) {
+	setRequiredEnv(t)
+	t.Setenv("PORT", "9090")
+	t.Setenv("LOG_LEVEL", "debug")
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load() returned unexpected error: %v", err)
+	}
+
+	if cfg.Database.URL != "postgres://tally:tally@localhost:5432/tally?sslmode=disable" {
+		t.Errorf("Database.URL = %q, want the configured DATABASE_URL", cfg.Database.URL)
+	}
+	if cfg.Server.Port != "9090" {
+		t.Errorf("Server.Port = %q, want %q", cfg.Server.Port, "9090")
+	}
+	if cfg.FX.APIKey != "test-key" {
+		t.Errorf("FX.APIKey = %q, want %q", cfg.FX.APIKey, "test-key")
+	}
+	if cfg.FX.URL != "https://api.example.com/v1" {
+		t.Errorf("FX.URL = %q, want %q", cfg.FX.URL, "https://api.example.com/v1")
+	}
+	if cfg.Log.Level != slog.LevelDebug {
+		t.Errorf("Log.Level = %v, want %v", cfg.Log.Level, slog.LevelDebug)
+	}
+}
+
+func TestLoad_DefaultsWhenOptionalVarsUnset(t *testing.T) {
+	setRequiredEnv(t)
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load() returned unexpected error: %v", err)
+	}
+
+	if cfg.Server.Port != "8080" {
+		t.Errorf("Server.Port = %q, want default %q", cfg.Server.Port, "8080")
+	}
+	if cfg.Log.Level != slog.LevelInfo {
+		t.Errorf("Log.Level = %v, want default %v", cfg.Log.Level, slog.LevelInfo)
+	}
+}
+
+func TestLoad_MissingRequiredVars(t *testing.T) {
+	// Deliberately leave DATABASE_URL, FX_API_KEY, and FX_API_URL unset.
+	_, err := Load()
+	if err == nil {
+		t.Fatal("Load() returned no error, want a MissingVarError naming the missing variables")
+	}
+
+	var missingErr *MissingVarError
+	if !errors.As(err, &missingErr) {
+		t.Fatalf("Load() error = %v, want it to wrap *MissingVarError", err)
+	}
+
+	want := []string{"DATABASE_URL", "FX_API_KEY", "FX_API_URL"}
+	if len(missingErr.Vars) != len(want) {
+		t.Fatalf("MissingVarError.Vars = %v, want %v", missingErr.Vars, want)
+	}
+	for i, v := range want {
+		if missingErr.Vars[i] != v {
+			t.Errorf("MissingVarError.Vars[%d] = %q, want %q", i, missingErr.Vars[i], v)
+		}
+	}
+}
+
+func TestLoad_InvalidLogLevel(t *testing.T) {
+	setRequiredEnv(t)
+	t.Setenv("LOG_LEVEL", "not-a-level")
+
+	_, err := Load()
+	if err == nil {
+		t.Fatal("Load() returned no error, want an error for the invalid LOG_LEVEL")
+	}
+}

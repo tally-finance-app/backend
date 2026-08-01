@@ -49,15 +49,25 @@ func writeKnownError(w http.ResponseWriter, appErr *apperr.AppError) {
 }
 
 func writeProblem(w http.ResponseWriter, status int, problemType, detail string, fields []apperr.FieldError) {
-	w.Header().Set("Content-Type", "application/problem+json")
-	w.WriteHeader(status)
-
-	body := problemDetails{
+	// Marshal BEFORE touching the ResponseWriter. Once WriteHeader has been
+	// called the status code is committed and can't be taken back, so a
+	// half-written body would be unrecoverable.
+	body, err := json.Marshal(problemDetails{
 		Type:   problemType,
 		Title:  http.StatusText(status),
 		Status: status,
 		Detail: detail,
 		Errors: fields,
+	})
+	if err != nil {
+		// Encoding our own fixed-shape struct can't realistically fail; if it
+		// somehow does, a bare status code is the only honest fallback left.
+		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
-	json.NewEncoder(w).Encode(body)
+
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(status)
+	// A write failure here means the client hung up — nothing actionable remains.
+	_, _ = w.Write(body)
 }

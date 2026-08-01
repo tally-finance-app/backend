@@ -20,7 +20,7 @@ within reason. A genuinely usable app is a secondary outcome, not the driver of 
 - **HTTP router:** `chi`
 - **Frontend (future phase, not yet started):** Angular + TypeScript, consuming the REST API.
 - **Git host:** GitHub. CI is GitHub Actions.
-- **Task tracking:** Linear (project "Personal Finance Tracker — MVP", team "Tally Finance App").
+- **Task tracking:** Linear (project "Go Backend", team "Tally Finance App").
   Specs live in Notion; this file duplicates what matters day-to-day so Claude Code doesn't need
   to fetch either.
 
@@ -134,7 +134,9 @@ line for that operation.
   no real database. This is what proves the dependency-inversion pattern actually decouples
   business logic from Postgres.
 - **Repository-layer integration tests**: run against the real Dockerized Postgres — these are
-  the tests that actually exercise SQL, constraints, and Postgres-specific behavior.
+  the tests that actually exercise SQL, constraints, and Postgres-specific behavior. They must
+  `t.Skip` (never `t.Fatal`) when `DATABASE_URL` is unset or `-short` is passed, so `make test`
+  stays green on a machine with no Postgres. Run them with `make test-integration`.
 - **Table-driven tests** are the default style for anything with multiple input/output cases.
 - Every Linear ticket's "Definition of Done" names a specific test scenario — write that test,
   don't just write _a_ test.
@@ -146,11 +148,41 @@ make db-up            # start local Postgres (Docker Compose)
 make db-down           # stop and remove (including volume)
 make migrate-up         # apply migrations
 make migrate-down       # roll back one migration
-make generate            # run sqlc generate
-make build                # go build ./...
-make test                  # go test ./... (needs db-up first for integration tests)
-make lint                   # golangci-lint run
+make migrate-verify      # up -> down -> up, proving the down migrations work
+make generate             # regenerate sqlc code (after editing a queries.sql)
+make verify-generate       # fail if committed generated code is stale
+make build                  # go build ./...
+make vet                     # go vet ./...
+make lint                     # golangci-lint run
+make test                      # unit tests only, no database needed
+make test-integration           # everything, incl. real Postgres (needs db-up first)
+make ci                          # what CI runs, end to end
+make tools                        # build the pinned dev tools into ./bin
+make hooks                         # install the lefthook git hooks (once per clone)
 ```
+
+**Development tools live in a separate `tools/` module.** `sqlc`, `golangci-lint`, and `lefthook`
+are pinned in `tools/go.mod` and built into `./bin` (gitignored) by `make tools`; every target that
+needs one declares it as a prerequisite, so they build on demand. Never `go install` them, and never
+add them to the root `go.mod`.
+
+The split is not cosmetic: minimal version selection unifies the whole module graph, so when sqlc
+was a root tool dependency **its** requirement silently chose the application's `pgx` version. A
+separate module makes that impossible. For the same reason, do **not** add `tools/` to a `go.work`
+workspace — workspaces re-unify MVS across modules and would undo it.
+
+Tools are invoked as `./bin/<tool>`, not `go tool <tool>` — `go -C tools tool sqlc ...` would run
+with `tools/` as the working directory, where `sqlc.yaml` and `migrations/` don't exist.
+
+Git hooks are managed by `lefthook.yml`: `pre-commit` formats and lints staged Go files and checks
+sqlc freshness, and `commit-msg` enforces §10 (blocks a `Co-Authored-By` trailer, warns on a missing
+`TALLY-<n>` reference). There is deliberately **no** `pre-push` hook — `main` is branch-protected,
+so build/vet/test are covered by CI on the PR.
+
+**sqlc-generated code is committed**, not gitignored: a fresh clone must build without sqlc
+installed, and a migration that silently changes a Go type should be visible in code review.
+`make verify-generate` (`sqlc diff`) is the CI guard that keeps it current. Never hand-edit
+anything under `internal/platform/postgres/generated/`, and never put a hand-written file there.
 
 ## 10. Git & Linear Workflow
 

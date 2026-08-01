@@ -19,6 +19,16 @@ func Serve(ctx context.Context, handler http.Handler, port string, logger *slog.
 	srv := &http.Server{
 		Addr:    ":" + port,
 		Handler: handler,
+
+		// Without these, a client can hold a connection open indefinitely by
+		// dribbling out request headers one byte at a time (Slowloris) — Go's
+		// defaults are all "no timeout". ReadHeaderTimeout is the one that
+		// closes that specific hole; the rest bound overall request handling
+		// and how long an idle keep-alive connection is kept around.
+		ReadHeaderTimeout: 10 * time.Second,
+		ReadTimeout:       15 * time.Second,
+		WriteTimeout:      15 * time.Second,
+		IdleTimeout:       60 * time.Second,
 	}
 
 	// errCh carries the result of ListenAndServe, which blocks until

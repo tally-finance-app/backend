@@ -9,6 +9,10 @@ on:
   workflow_dispatch:
 
 jobs:
+  # Everything that needs no database. Steps are Makefile targets so that a
+  # green `make ci` locally means a green pipeline — sqlc and golangci-lint are
+  # pinned as go.mod tool dependencies, so there is nothing to install and no
+  # way for CI to run a different version than a developer does.
   lint:
     runs-on: ubuntu-latest
 
@@ -24,26 +28,44 @@ jobs:
       - name: Install dependencies
         run: go mod download
 
-      - name: Install sqlc
-        run: go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.31.1
+      # Tools live in the separate tools/ module and are compiled into ./bin.
+      # Cached on tools/go.sum so they're only rebuilt when a pinned version
+      # changes — the versions themselves come from tools/go.mod, so CI and a
+      # developer's machine always run identical binaries.
+      - name: Cache development tools
+        uses: actions/cache@v4
+        with:
+          path: bin
+          key: tools-${{ runner.os }}-${{ hashFiles('tools/go.sum') }}
 
-      - name: Generate sqlc code
-        run: sqlc generate
+      - name: Build development tools
+        run: make tools
+
+      # Generated code is committed, so the useful check is that it still
+      # matches migrations/ and the queries files. Regenerating here instead
+      # would hide staleness — CI would go green against code no one reviewed.
+      - name: Verify generated code is up to date
+        run: make verify-generate
 
       - name: Build
-        run: go build -v ./...
+        run: make build
 
       - name: Go Vet
-        run: go vet ./...
+        run: make vet
 
       - name: Lint
-        uses: golangci/golangci-lint-action@v9
+        run: make lint
+
+      - name: Unit tests
+        run: make test
 
   test:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:16
+        # Must match docker-compose.yml — testing against a different major
+        # version than you develop on defeats the point of using real Postgres.
+        image: postgres:18
         env:
           POSTGRES_USER: tally
           POSTGRES_PASSWORD: tally
@@ -52,9 +74,9 @@ jobs:
           - 5432:5432
         options: >-
           --health-cmd pg_isready
-          --health-interval 10s
+          --health-interval 5s
           --health-timeout 5s
-          --health-retries 5
+          --health-retries 10
     env:
       DATABASE_URL: postgres://tally:tally@localhost:5432/tally_test?sslmode=disable
 
@@ -70,14 +92,10 @@ jobs:
       - name: Install dependencies
         run: go mod download
 
-      - name: Install sqlc
-        run: go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.31.1
+      # up -> down -> up, so a broken .down.sql fails the build. Nothing else
+      # exercises the down migrations.
+      - name: Verify migrations round-trip
+        run: make migrate-verify
 
-      - name: Generate sqlc code
-        run: sqlc generate
-
-      - name: Run migrations
-        run: make migrate-up
-
-      - name: Run tests
-        run: go test -v ./...
+      - name: Integration tests
+        run: make test-integration

@@ -1,0 +1,45 @@
+# golangci-lint v2 configuration.
+#
+# Deliberately a modest starter set: every linter enabled here is findings that
+# must be fixed, so the list grows as the codebase does rather than all at once.
+# Pinned to the same version CI installs — see .github/workflows/ci.yml.
+version: "2"
+
+run:
+  timeout: 5m
+
+linters:
+  # "standard" = errcheck, govet, ineffassign, staticcheck, unused.
+  default: standard
+  enable:
+    - bodyclose # HTTP response bodies must be closed — matters for the FX client
+    - copyloopvar
+    - errorlint # correct %w wrapping and errors.Is/As usage; apperr depends on it
+    - gosec
+    - misspell
+    - nilerr # returning nil after checking a non-nil error
+    - rowserrcheck # pgx/sql row-iteration mistakes, once repositories exist
+    - sqlclosecheck
+
+  exclusions:
+    generated: lax
+    paths:
+      # sqlc owns this directory and it must never be hand-edited, so findings
+      # there are unactionable. Excluded wholesale rather than per-linter.
+      - internal/platform/postgres/generated
+    rules:
+      # Test fixtures hardcode throwaway credentials on purpose.
+      - path: _test\.go
+        linters:
+          - gosec
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  settings:
+    goimports:
+      # Keeps this module's imports in their own group, matching the existing
+      # style in cmd/api/main.go and the transport package.
+      local-prefixes:
+        - github.com/tally-finance-app/backend

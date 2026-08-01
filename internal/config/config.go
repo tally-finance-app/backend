@@ -32,9 +32,13 @@ type LogConfig struct {
 	Level slog.Level
 }
 
+// Load reads configuration from the process environment and validates it.
+//
+// It deliberately does NOT read a .env file — that's the entrypoint's job (see
+// LoadDotEnv, called from cmd/api). Keeping Load a pure function of the process
+// environment is what makes it testable: a test can set exactly the variables it
+// cares about via t.Setenv without a stray .env on disk changing the outcome.
 func Load() (Config, error) {
-	_ = godotenv.Load()
-
 	logLevel, levelErr := parseLogLevel(getenv("LOG_LEVEL", "info"))
 
 	cfg := Config{
@@ -58,6 +62,19 @@ func Load() (Config, error) {
 	}
 
 	return cfg, nil
+}
+
+// LoadDotEnv populates the process environment from a .env file in the working
+// directory, if one exists. Real environment variables already set always win.
+//
+// This is separate from Load so that only real entrypoints (cmd/api, cmd/jobs)
+// pick up local developer config — tests and CI use the environment directly.
+// A missing .env is not an error; that's the normal case in CI and production.
+func LoadDotEnv() {
+	// Error deliberately discarded: the only failure mode that matters here is a
+	// malformed .env, and a missing one is the normal case in CI and production.
+	// Required values are validated by Load() regardless of where they came from.
+	_ = godotenv.Load()
 }
 
 func getenv(key, fallback string) string {

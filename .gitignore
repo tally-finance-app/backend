@@ -9,6 +9,9 @@
 *.dylib
 /migrate
 
+# Development tools built from the tools/ module by `make tools`
+/bin/
+
 # Test binary, built with `go test -c`
 *.test
 
@@ -28,10 +31,10 @@ go.work.sum
 # env file
 .env
 
-# sqlc-generated code (regenerate with `make generate`) — hand-written tests
-# living alongside it are excluded from the ignore
-/internal/platform/postgres/generated/*
-!/internal/platform/postgres/generated/*_test.go
+# sqlc-generated code under internal/platform/postgres/generated is deliberately
+# COMMITTED, not ignored: a fresh clone must build without sqlc installed, and a
+# migration that silently changes a Go type should show up in code review.
+# `make generate` regenerates it; CI runs `sqlc diff` to prove it's current.
 
 # Editor/IDE
 # .idea/

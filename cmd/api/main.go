@@ -8,10 +8,15 @@ import (
 	"syscall"
 
 	"github.com/tally-finance-app/backend/internal/config"
-	"github.com/tally-finance-app/backend/internal/transport/http"
+	tallyhttp "github.com/tally-finance-app/backend/internal/transport/http"
 )
 
 func main() {
+	// Local development convenience: pull .env into the process environment
+	// before reading config. Real env vars (CI, production) take precedence,
+	// and a missing .env is fine.
+	config.LoadDotEnv()
+
 	cfg, err := config.Load()
 	if err != nil {
 		// slog.Default() since our real logger's level comes from cfg itself —

@@ -6,6 +6,22 @@ import (
 	"testing"
 )
 
+// configVars is every environment variable Load() reads. Tests clear all of them
+// up front so a variable that happens to be set in the surrounding environment
+// can't change the result — CI, for instance, sets DATABASE_URL at job scope for
+// the Postgres service container.
+var configVars = []string{"DATABASE_URL", "FX_API_KEY", "FX_API_URL", "PORT", "LOG_LEVEL"}
+
+// clearEnv unsets every config variable for the duration of the test.
+// validate() treats the empty string as absent, so "" is equivalent to unset
+// while still being restored by t.Setenv's automatic cleanup.
+func clearEnv(t *testing.T) {
+	t.Helper()
+	for _, key := range configVars {
+		t.Setenv(key, "")
+	}
+}
+
 func setRequiredEnv(t *testing.T) {
 	t.Helper()
 	t.Setenv("DATABASE_URL", "postgres://tally:tally@localhost:5432/tally?sslmode=disable")
@@ -14,6 +30,7 @@ func setRequiredEnv(t *testing.T) {
 }
 
 func TestLoad_HappyPath(t *testing.T) {
+	clearEnv(t)
 	setRequiredEnv(t)
 	t.Setenv("PORT", "9090")
 	t.Setenv("LOG_LEVEL", "debug")
@@ -41,6 +58,7 @@ func TestLoad_HappyPath(t *testing.T) {
 }
 
 func TestLoad_DefaultsWhenOptionalVarsUnset(t *testing.T) {
+	clearEnv(t)
 	setRequiredEnv(t)
 
 	cfg, err := Load()
@@ -58,6 +76,8 @@ func TestLoad_DefaultsWhenOptionalVarsUnset(t *testing.T) {
 
 func TestLoad_MissingRequiredVars(t *testing.T) {
 	// Deliberately leave DATABASE_URL, FX_API_KEY, and FX_API_URL unset.
+	clearEnv(t)
+
 	_, err := Load()
 	if err == nil {
 		t.Fatal("Load() returned no error, want a MissingVarError naming the missing variables")
@@ -80,6 +100,7 @@ func TestLoad_MissingRequiredVars(t *testing.T) {
 }
 
 func TestLoad_InvalidLogLevel(t *testing.T) {
+	clearEnv(t)
 	setRequiredEnv(t)
 	t.Setenv("LOG_LEVEL", "not-a-level")
 

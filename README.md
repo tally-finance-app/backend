@@ -1,5 +1,7 @@
 # Tally — Personal Finance Tracker
 
+[![CI](https://github.com/tally-finance-app/backend/actions/workflows/ci.yml/badge.svg)](https://github.com/tally-finance-app/backend/actions/workflows/ci.yml)
+
 A multi-user, multi-currency personal finance tracker with household expense sharing and credit
 card statement management, built as a hands-on system design and data structures/algorithms
 learning project.
@@ -75,10 +77,16 @@ architectural reference.
 
 ### Prerequisites
 
-- Go 1.22+
-- Docker + Docker Compose
-- [`sqlc`](https://docs.sqlc.dev/en/latest/overview/install.html)
-- [`golang-migrate`](https://github.com/golang-migrate/migrate#installation)
+- Go 1.26+ (see `go` directive in `go.mod`)
+- Docker + Docker Compose (or Podman)
+
+That's it. `sqlc`, `golangci-lint`, and `lefthook` are pinned in a separate `tools/` module and
+built into `./bin` by `make tools` (which every target needing them depends on), so CI and your
+machine run identical versions with nothing to install. `golang-migrate` is used as a library by
+`cmd/migrate`, so its CLI isn't needed either.
+
+Tools are deliberately kept in their own module so their dependency graphs can't influence the
+versions the application builds against — see `tools/go.mod` for the details.
 
 ### Setup
 
@@ -96,12 +104,15 @@ make db-up
 # Apply migrations
 make migrate-up
 
-# Generate typed query code from SQL
-make generate
+# Enable git hooks (format, lint, and codegen freshness on commit)
+make hooks
 
 # Run the API server
 go run ./cmd/api
 ```
+
+sqlc-generated query code is committed, so no codegen step is needed for a first run — you only
+run `make generate` after editing a `queries.sql` file.
 
 Server starts on the port configured in `.env`; confirm it's up with:
 
@@ -116,11 +127,31 @@ make db-up            # start local Postgres (Docker Compose)
 make db-down           # stop and remove (including volume)
 make migrate-up         # apply migrations
 make migrate-down       # roll back one migration
-make generate             # run sqlc generate
+make migrate-verify     # up -> down -> up, proving the down migrations work
+make generate            # regenerate sqlc code (after editing a queries.sql)
+make verify-generate      # fail if committed generated code is stale
 make build                 # go build ./...
-make test                    # go test ./... (needs db-up first for integration tests)
-make lint                     # golangci-lint run
+make vet                    # go vet ./...
+make lint                    # golangci-lint run
+make test                     # unit tests only, no database needed
+make test-integration          # everything, incl. real Postgres (needs db-up first)
+make ci                         # what CI runs, end to end
+make tools                        # build the pinned dev tools into ./bin
+make hooks                         # install the lefthook git hooks
 ```
+
+### Git hooks
+
+[lefthook](https://github.com/evilmartians/lefthook) (pinned in `tools/go.mod`, config in
+`lefthook.yml`) runs on commit once you've run `make hooks`:
+
+| Hook | Does |
+|---|---|
+| `pre-commit` | formats staged Go files and re-stages them, lints the new changes, verifies committed sqlc output isn't stale |
+| `commit-msg` | blocks a `Co-Authored-By` trailer; warns if no `TALLY-<n>` reference |
+
+There is deliberately no `pre-push` hook: `main` is branch-protected, so every change arrives via a
+PR and CI is the gate for build/vet/test. Bypass a hook with `git commit --no-verify`.
 
 ## Testing
 
@@ -128,9 +159,14 @@ make lint                     # golangci-lint run
 - **Repository-layer integration tests** run against the real Dockerized Postgres, exercising
   actual SQL and constraints.
 
+Integration tests skip automatically when `DATABASE_URL` is unset, so `make test` is always safe
+to run without Postgres.
+
 ```bash
-make db-up
-make test
+make test                 # fast, no database
+
+make db-up && make migrate-up
+make test-integration      # includes repository-layer tests
 ```
 
 ## API

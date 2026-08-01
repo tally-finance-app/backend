@@ -2,7 +2,10 @@ version: "2"
 sql:
   - engine: "postgresql"
     schema: "migrations"
-    queries: "internal/account/queries.sql"
+    # A glob, not a fixed path, so each domain package can own its own
+    # queries.sql (the convention from TALLY-133) without editing this file.
+    queries:
+      - "internal/*/queries.sql"
     gen:
       go:
         package: "generated"

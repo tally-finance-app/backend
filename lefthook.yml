@@ -1,0 +1,58 @@
+# Git hooks, managed by lefthook.
+#
+# lefthook is pinned in tools/go.mod (a separate module, so tool dependencies
+# can't influence the application's) and built into ./bin. Enable the hooks in a
+# fresh clone with `make hooks`, which builds every binary they invoke.
+#
+# Design principle: keep these fast and local-only. There is deliberately no
+# pre-push hook — main is branch-protected, so every change arrives via a PR and
+# CI is the gate for build/vet/test. Duplicating that on push would only add
+# latency to something already covered.
+#
+# Bypass a hook deliberately with `git commit --no-verify`.
+
+# Sourced by every generated hook script; sets LEFTHOOK_BIN to the pinned binary.
+rc: ./.lefthookrc
+
+pre-commit:
+  parallel: true
+  jobs:
+    - name: format
+      # --fix rewrites formatting, stage_fixed re-stages the result so the
+      # commit contains the formatted code rather than failing on it.
+      glob: "*.go"
+      run: bin/golangci-lint fmt {staged_files}
+      stage_fixed: true
+
+    - name: lint
+      glob: "*.go"
+      # Lint only the packages touched by this commit, not the whole tree.
+      run: bin/golangci-lint run --new-from-rev=HEAD
+
+    - name: verify-generate
+      # sqlc output is committed, so a migration or query change without a
+      # matching `make generate` would land stale generated code.
+      #
+      # Runs on every commit rather than being glob-filtered: lefthook only
+      # skips a glob-filtered job when its command interpolates {staged_files},
+      # which a make target can't. `sqlc diff` takes ~0.2s, so unconditional is
+      # cheaper than the workaround.
+      run: make verify-generate
+
+commit-msg:
+  jobs:
+    - name: no-coauthored-by
+      # CLAUDE.md §10: commits must not carry a Co-Authored-By trailer.
+      run: |
+        if grep -qi '^Co-Authored-By:' {1}; then
+          echo "Commit message contains a Co-Authored-By trailer (CLAUDE.md §10 forbids it)."
+          exit 1
+        fi
+
+    - name: linear-ticket-reference
+      # CLAUDE.md §10: commit messages should reference the Linear ticket.
+      # A warning, not a failure — merge commits and chores legitimately lack one.
+      run: |
+        if ! grep -qE 'TALLY-[0-9]+' {1}; then
+          echo "warning: no TALLY-<number> reference found in the commit message (CLAUDE.md §10)."
+        fi

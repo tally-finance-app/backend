@@ -1,0 +1,7 @@
+# Sourced by the generated .git/hooks/* scripts (via `rc:` in lefthook.yml).
+#
+# Points the hooks at the lefthook binary pinned in tools/go.mod and built by
+# `make hooks`. Without this, the hook script searches PATH and then falls back to
+# `go tool lefthook` — which no longer works, since lefthook moved out of the main
+# module. An unpinned lefthook off PATH would also silently differ from CI.
+export LEFTHOOK_BIN="$(git rev-parse --show-toplevel)/bin/lefthook"

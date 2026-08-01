@@ -160,6 +160,7 @@ make lint                   # golangci-lint run
 - Every Linear story follows this template — match it when writing PR descriptions or checking
   work against a ticket: **Background, User story, Scope, Acceptance criteria, Out of scope,
   Dependencies, Definition of done.**
+- Commits should **not** include a `Co-Authored-By` trailer for Claude.
 
 ## 11. Roadmap Awareness
 

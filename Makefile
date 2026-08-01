@@ -15,10 +15,10 @@ db-down:
 	$(CONTAINER_ENGINE) compose down -v
 
 migrate-up:
-	set -a && . ./.env && set +a && go run ./cmd/migrate up
+	if [ -f .env ]; then set -a && . ./.env && set +a; fi; go run ./cmd/migrate up
 
 migrate-down:
-	set -a && . ./.env && set +a && go run ./cmd/migrate down
+	if [ -f .env ]; then set -a && . ./.env && set +a; fi; go run ./cmd/migrate down
 
 generate:
 	sqlc generate

@@ -22,6 +22,9 @@ func clearEnv(t *testing.T) {
 	}
 }
 
+// setRequiredEnv sets everything Load() needs to succeed. FX values are included
+// because the happy-path test asserts they're read, not because Load() requires
+// them — see TestLoad_SucceedsWithoutFXCredentials.
 func setRequiredEnv(t *testing.T) {
 	t.Helper()
 	t.Setenv("DATABASE_URL", "postgres://tally:tally@localhost:5432/tally?sslmode=disable")
@@ -75,7 +78,9 @@ func TestLoad_DefaultsWhenOptionalVarsUnset(t *testing.T) {
 }
 
 func TestLoad_MissingRequiredVars(t *testing.T) {
-	// Deliberately leave DATABASE_URL, FX_API_KEY, and FX_API_URL unset.
+	// Deliberately leave every variable unset. Only DATABASE_URL is required at
+	// startup — FX credentials are validated at their point of use instead, see
+	// TestFXConfigValidate.
 	clearEnv(t)
 
 	_, err := Load()
@@ -88,7 +93,7 @@ func TestLoad_MissingRequiredVars(t *testing.T) {
 		t.Fatalf("Load() error = %v, want it to wrap *MissingVarError", err)
 	}
 
-	want := []string{"DATABASE_URL", "FX_API_KEY", "FX_API_URL"}
+	want := []string{"DATABASE_URL"}
 	if len(missingErr.Vars) != len(want) {
 		t.Fatalf("MissingVarError.Vars = %v, want %v", missingErr.Vars, want)
 	}
@@ -107,5 +112,77 @@ func TestLoad_InvalidLogLevel(t *testing.T) {
 	_, err := Load()
 	if err == nil {
 		t.Fatal("Load() returned no error, want an error for the invalid LOG_LEVEL")
+	}
+}
+
+// The API server must boot without FX credentials: nothing in it calls the FX
+// provider yet, and requiring them made `go run ./cmd/api` impossible without
+// inventing values for a provider the app never contacts.
+func TestLoad_SucceedsWithoutFXCredentials(t *testing.T) {
+	clearEnv(t)
+	t.Setenv("DATABASE_URL", "postgres://tally:tally@localhost:5432/tally?sslmode=disable")
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load() returned unexpected error: %v", err)
+	}
+	if cfg.FX.APIKey != "" || cfg.FX.URL != "" {
+		t.Errorf("FX config = %+v, want zero values when unset", cfg.FX)
+	}
+}
+
+// FXConfig.Validate is where the FX requirement actually lives now, so it has to
+// name precisely the variables that are missing.
+func TestFXConfigValidate(t *testing.T) {
+	tests := []struct {
+		name        string
+		fx          FXConfig
+		wantMissing []string
+	}{
+		{
+			name: "complete",
+			fx:   FXConfig{APIKey: "k", URL: "https://api.example.com/v1"},
+		},
+		{
+			name:        "missing key",
+			fx:          FXConfig{URL: "https://api.example.com/v1"},
+			wantMissing: []string{"FX_API_KEY"},
+		},
+		{
+			name:        "missing url",
+			fx:          FXConfig{APIKey: "k"},
+			wantMissing: []string{"FX_API_URL"},
+		},
+		{
+			name:        "missing both",
+			fx:          FXConfig{},
+			wantMissing: []string{"FX_API_KEY", "FX_API_URL"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.fx.Validate()
+
+			if tt.wantMissing == nil {
+				if err != nil {
+					t.Fatalf("Validate() = %v, want nil", err)
+				}
+				return
+			}
+
+			var missingErr *MissingVarError
+			if !errors.As(err, &missingErr) {
+				t.Fatalf("Validate() error = %v, want *MissingVarError", err)
+			}
+			if len(missingErr.Vars) != len(tt.wantMissing) {
+				t.Fatalf("Vars = %v, want %v", missingErr.Vars, tt.wantMissing)
+			}
+			for i, v := range tt.wantMissing {
+				if missingErr.Vars[i] != v {
+					t.Errorf("Vars[%d] = %q, want %q", i, missingErr.Vars[i], v)
+				}
+			}
+		})
 	}
 }

@@ -29,8 +29,9 @@ Ask (if not already given):
 2. **`internal/<domain>/repository.go`** — the repository interface only. Method signatures
    should mirror the operations gathered in Step 1, taking `context.Context` first.
 
-3. **sqlc query file** (e.g. `internal/<domain>/queries.sql` or wherever this project's sqlc
-   config points) — hand-written SQL for each repository method, with named parameters.
+3. **sqlc query file** (`internal/platform/postgres/<domain>_queries.sql`, per `sqlc.yaml` —
+   lives with the Postgres adapter, not the domain package, since raw SQL is an infrastructure
+   concern) — hand-written SQL for each repository method, with named parameters.
 
 4. **`internal/platform/postgres/<domain>_repository.go`** — the sqlc-backed implementation of
    the repository interface from step 2. This file should be a thin adapter — no business logic,

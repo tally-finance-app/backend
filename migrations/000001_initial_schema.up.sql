@@ -82,8 +82,8 @@ CREATE TABLE credit_cards (
     credit_limit_minor_units  bigint NOT NULL,
     close_day                 int NOT NULL,
     due_day                   int NOT NULL,
-    color                     varchar,
-    icon                      varchar,
+    color                     varchar NOT NULL,
+    icon                      varchar NOT NULL,
     created_at                timestamptz NOT NULL,
     updated_at                timestamptz NOT NULL,
     deleted_at                timestamptz

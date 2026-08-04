@@ -28,7 +28,7 @@ func NewAccountRepository(db generated.DBTX) *AccountRepository {
 var _ account.Repository = (*AccountRepository)(nil)
 
 func (r *AccountRepository) Create(ctx context.Context, a *account.Account) error {
-	created, err := r.q.CreateAccount(ctx, toCreateParams(a))
+	created, err := r.q.CreateAccount(ctx, toCreateAccountParams(a))
 	if err != nil {
 		return fmt.Errorf("create account: %w", err)
 	}

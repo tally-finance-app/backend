@@ -40,8 +40,8 @@ func toNullableText(s string) pgtype.Text {
 	return pgtype.Text{String: s, Valid: true}
 }
 
-// toCreateParams maps a domain Account into sqlc's generated create params.
-func toCreateParams(a *account.Account) generated.CreateAccountParams {
+// toCreateAccountParams maps a domain Account into sqlc's generated create params.
+func toCreateAccountParams(a *account.Account) generated.CreateAccountParams {
 	return generated.CreateAccountParams{
 		ID:                       a.ID,
 		UserID:                   a.UserID,

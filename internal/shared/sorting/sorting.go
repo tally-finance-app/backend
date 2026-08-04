@@ -1,3 +1,5 @@
+// Package sorting provides the shared ordering conventions used by list
+// queries to keep pagination deterministic.
 package sorting
 
 type Direction string

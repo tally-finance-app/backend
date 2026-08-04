@@ -1,3 +1,6 @@
+// Package account holds the Account domain entity, its constructor-enforced
+// invariants, the repository interface it depends on, and the service layer
+// that implements account use cases.
 package account
 
 import (

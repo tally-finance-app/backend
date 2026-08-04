@@ -1,3 +1,5 @@
+// Package postgres implements the domain repository interfaces against
+// Postgres, using sqlc-generated code and pgx.
 package postgres
 
 import (

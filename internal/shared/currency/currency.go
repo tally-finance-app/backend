@@ -1,3 +1,5 @@
+// Package currency defines the closed set of currencies supported by the
+// MVP and their minor-unit conventions.
 package currency
 
 type Code string

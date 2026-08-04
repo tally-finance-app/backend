@@ -1,3 +1,5 @@
+// Package pagination provides the shared page/page_size conventions used by
+// every list endpoint.
 package pagination
 
 type PageSize int

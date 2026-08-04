@@ -2,7 +2,7 @@
 
 > Migrated from Notion on 2026-08-03. Reflects the schema built by `migrations/000001_initial_schema.up.sql`.
 > Note: Mermaid's `erDiagram` syntax shown below doesn't annotate nullability, so it won't visibly
-> show which columns are `NOT NULL` — check the migration or `docs/requirements-and-domain-model.md`
+> show which columns are `NOT NULL` — check the migration or `.docs/requirements-and-domain-model.md`
 > for that.
 
 ```mermaid

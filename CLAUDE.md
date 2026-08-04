@@ -2,16 +2,16 @@
 
 Self-contained project reference for Claude Code. This file is meant to make Linear lookups unnecessary for day-to-day work — if something here goes stale, fix it here first.
 
-Full specs live in this repo under `docs/`, not Notion:
+Full specs live in this repo under `.docs/`, not Notion:
 
-- `docs/requirements-and-domain-model.md` — domain entities, business rules, MVP scope
-- `docs/api-contract.md` — REST endpoints, conventions, request/response shapes
-- `docs/product-roadmap.md` — phased roadmap for everything deferred out of MVP
-- `docs/er-diagram.md` — Mermaid ER diagram of the schema
+- `.docs/requirements-and-domain-model.md` — domain entities, business rules, MVP scope
+- `.docs/api-contract.md` — REST endpoints, conventions, request/response shapes
+- `.docs/product-roadmap.md` — phased roadmap for everything deferred out of MVP
+- `.docs/er-diagram.md` — Mermaid ER diagram of the schema
 
 (These used to live in Notion; the Notion pages now just point here — see each file's own history for why.)
 
-Source of truth: this file is a condensed, day-to-day duplicate of what matters from the docs above — kept self-contained so Claude Code doesn't need to open them for every question. If this file and a `docs/*.md` file ever disagree, the `docs/` file is canonical — update this file to match. **Any change to domain rules, API shape, or roadmap phasing must be made in the relevant `docs/*.md` file first, with a dated entry appended to that file's `## Changelog` section explaining the reasoning (why, not just what changed) — before or alongside updating this file or the code.** Check for drift periodically, not just when something visibly breaks.
+Source of truth: this file is a condensed, day-to-day duplicate of what matters from the docs above — kept self-contained so Claude Code doesn't need to open them for every question. If this file and a `.docs/*.md` file ever disagree, the `.docs/` file is canonical — update this file to match. **Any change to domain rules, API shape, or roadmap phasing must be made in the relevant `.docs/*.md` file first, with a dated entry appended to that file's `## Changelog` section explaining the reasoning (why, not just what changed) — before or alongside updating this file or the code.** Check for drift periodically, not just when something visibly breaks.
 
 ## 1. Purpose & Goals
 
@@ -30,7 +30,7 @@ within reason. A genuinely usable app is a secondary outcome, not the driver of 
 - **Frontend (future phase, not yet started):** Angular + TypeScript, consuming the REST API.
 - **Git host:** GitHub. CI is GitHub Actions.
 - **Task tracking:** Linear (project "Go Backend", team "Tally Finance App").
-  Specs live in this repo under `docs/` (see intro above); this file duplicates what matters
+  Specs live in this repo under `.docs/` (see intro above); this file duplicates what matters
   day-to-day so Claude Code doesn't need to open either.
 
 ## 3. Architecture — Light DDD
@@ -222,7 +222,7 @@ read the Makefile, so it silently drifts otherwise.
 
 ## 11. Roadmap Awareness
 
-Condensed from `docs/product-roadmap.md` (the canonical, phase-by-phase version — update it first
+Condensed from `.docs/product-roadmap.md` (the canonical, phase-by-phase version — update it first
 if a phase changes, then update this list to match). Things deliberately **NOT** in this MVP —
 don't build them "while you're in there," even if it seems convenient:
 

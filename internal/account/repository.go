@@ -11,6 +11,7 @@ import (
 	"github.com/tally-finance-app/backend/internal/shared/sorting"
 )
 
+// SortBy is the closed set of columns account list queries may sort by.
 type SortBy string
 
 const (
@@ -29,6 +30,7 @@ func (s SortBy) Valid() bool {
 	}
 }
 
+// ListFilter narrows and orders a List/Count query over a user's accounts.
 type ListFilter struct {
 	UserID        uuid.UUID
 	Type          AccountType
@@ -39,6 +41,8 @@ type ListFilter struct {
 	SortDirection sorting.Direction
 }
 
+// Repository is the persistence interface the account service depends on,
+// implemented separately in internal/platform/postgres.
 type Repository interface {
 	Create(ctx context.Context, a *Account) error
 	GetByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*Account, error)

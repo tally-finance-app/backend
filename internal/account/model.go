@@ -13,6 +13,7 @@ import (
 	"github.com/tally-finance-app/backend/internal/shared/currency"
 )
 
+// AccountType is the closed set of account kinds a user can create.
 type AccountType string
 
 const (
@@ -43,6 +44,8 @@ func IconForType(t AccountType) string {
 	return accountTypeIcons[t]
 }
 
+// Account is a user-owned financial account (checking, savings, or cash).
+// Always construct one via NewAccount so its invariants hold.
 type Account struct {
 	ID                       uuid.UUID
 	UserID                   uuid.UUID
@@ -57,6 +60,7 @@ type Account struct {
 	DeletedAt                *time.Time
 }
 
+// NewAccountParams holds the fields required to construct a new Account.
 type NewAccountParams struct {
 	UserID                   uuid.UUID
 	Name                     string
@@ -66,6 +70,8 @@ type NewAccountParams struct {
 	Color                    string
 }
 
+// NewAccount validates params and constructs a new Account, deriving Icon
+// from Type so the two can never drift.
 func NewAccount(params NewAccountParams) (*Account, error) {
 	var fields []apperr.FieldError
 

@@ -13,6 +13,7 @@ import (
 	"github.com/tally-finance-app/backend/internal/config"
 	"github.com/tally-finance-app/backend/internal/platform/postgres"
 	tallyhttp "github.com/tally-finance-app/backend/internal/transport/http"
+	"github.com/tally-finance-app/backend/internal/transport/http/handlers"
 )
 
 func main() {
@@ -51,9 +52,11 @@ func main() {
 
 	accountRepo := postgres.NewAccountRepository(pool)
 	accountService := account.NewService(accountRepo)
-	accountHandler := tallyhttp.NewAccountHandler(accountService)
+	accountHandler := handlers.NewAccountHandler(accountService)
 
-	router := tallyhttp.NewRouter(logger, accountHandler)
+	router := tallyhttp.NewRouter(logger, tallyhttp.Handlers{
+		Account: accountHandler,
+	})
 	if err := tallyhttp.Serve(ctx, router, cfg.Server.Port, logger); err != nil {
 		logger.Error("server error", "err", err)
 		os.Exit(1)

@@ -1,4 +1,4 @@
-package tallyhttp_test
+package handlers_test
 
 import (
 	"bytes"
@@ -17,7 +17,7 @@ import (
 
 	"github.com/tally-finance-app/backend/internal/account"
 	"github.com/tally-finance-app/backend/internal/platform/postgres"
-	tallyhttp "github.com/tally-finance-app/backend/internal/transport/http"
+	"github.com/tally-finance-app/backend/internal/transport/http/handlers"
 )
 
 // TestAccountHandler_CreateThenGet_RealPostgres proves the whole vertical
@@ -56,7 +56,7 @@ func TestAccountHandler_CreateThenGet_RealPostgres(t *testing.T) {
 	}
 
 	repo := postgres.NewAccountRepository(pool)
-	handler := tallyhttp.NewAccountHandler(account.NewService(repo))
+	handler := handlers.NewAccountHandler(account.NewService(repo))
 	router := chi.NewRouter()
 	router.Route("/api/v1/accounts", func(r chi.Router) {
 		r.Post("/", handler.Create)

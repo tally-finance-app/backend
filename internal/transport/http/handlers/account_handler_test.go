@@ -1,4 +1,4 @@
-package tallyhttp_test
+package handlers_test
 
 import (
 	"bytes"
@@ -14,7 +14,7 @@ import (
 
 	"github.com/tally-finance-app/backend/internal/account"
 	"github.com/tally-finance-app/backend/internal/apperr"
-	tallyhttp "github.com/tally-finance-app/backend/internal/transport/http"
+	"github.com/tally-finance-app/backend/internal/transport/http/handlers"
 )
 
 // fakeRepository is a minimal in-memory account.Repository, letting these
@@ -80,7 +80,7 @@ var _ account.Repository = (*fakeRepository)(nil)
 
 func newTestRouter() (http.Handler, *fakeRepository) {
 	repo := newFakeRepository()
-	handler := tallyhttp.NewAccountHandler(account.NewService(repo))
+	handler := handlers.NewAccountHandler(account.NewService(repo))
 	r := chi.NewRouter()
 	r.Route("/api/v1/accounts", func(r chi.Router) {
 		r.Post("/", handler.Create)

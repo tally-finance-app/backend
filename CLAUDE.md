@@ -62,7 +62,8 @@ internal/
   fx/
   user/
   platform/postgres/  repository implementations, sqlc-generated code
-  transport/http/      handlers, routing, middleware
+  transport/http/      routing, middleware, error mapping
+    handlers/           one file per domain: request parsing/response writing only
 cmd/
   api/                main.go — HTTP server
   jobs/                main.go — statement generation, FX caching
@@ -81,7 +82,11 @@ internal/<domain>/
 ```
 
 Postgres implementation goes in `internal/platform/postgres/<domain>_repository.go`.
-HTTP handlers go in `internal/transport/http/<domain>_handler.go`.
+HTTP handlers go in `internal/transport/http/handlers/<domain>_handler.go` — a separate
+package (`handlers`) from routing/middleware/error-mapping (`internal/transport/http` itself),
+so `NewRouter` accepts handlers via a small structural interface (e.g. `accountRoutes` in
+`router.go`) rather than importing the `handlers` package directly, avoiding an import cycle
+with `WriteError`.
 
 ## 4. Money & Currency Rules
 

@@ -41,10 +41,16 @@ Ask (if not already given):
    interface (never importing `internal/platform/postgres` directly — that's the layering
    violation the `code-review` skill flags).
 
-6. **`internal/transport/http/<domain>_handler.go`** — HTTP handlers calling the service. Parse
-   request, call service, use the RFC 9457 error helper for any error path, write response.
+6. **`internal/transport/http/handlers/<domain>_handler.go`** — HTTP handlers calling the
+   service, in the `handlers` package (separate from routing/middleware in `internal/transport/http`
+   itself). Parse request, call service, use the RFC 9457 error helper (`tallyhttp.WriteError`) for
+   any error path, write response.
 
-7. **Route registration** — wire the new handler's routes into the router in `cmd/api/main.go`.
+7. **Route registration** — wire the new handler's routes into `NewRouter` (`internal/transport/http/router.go`)
+   via a small structural interface for that domain (mirroring `accountRoutes`), then construct the
+   handler in `cmd/api/main.go` and pass it in. Don't have `router.go` import the `handlers` package
+   directly — `handlers` already imports `internal/transport/http` for `WriteError`, so that would
+   be an import cycle.
 
 ## Step 3: tests alongside, not after
 

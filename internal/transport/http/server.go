@@ -1,7 +1,7 @@
-// Package tallyhttp contains the HTTP transport layer: request routing,
+// Package http contains the HTTP transport layer: request routing,
 // middleware, and handlers that parse requests/write responses, delegating
 // all business logic to the service layer.
-package tallyhttp
+package http
 
 import (
 	"context"

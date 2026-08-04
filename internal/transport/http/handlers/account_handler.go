@@ -1,4 +1,8 @@
-package tallyhttp
+// Package handlers holds one file per domain, each parsing requests and
+// writing responses only — all business logic lives in the corresponding
+// service layer (see internal/account/README.md for the full layering this
+// is part of).
+package handlers
 
 import (
 	"encoding/json"
@@ -14,6 +18,7 @@ import (
 	"github.com/tally-finance-app/backend/internal/shared/currency"
 	"github.com/tally-finance-app/backend/internal/shared/pagination"
 	"github.com/tally-finance-app/backend/internal/shared/sorting"
+	tallyhttp "github.com/tally-finance-app/backend/internal/transport/http"
 )
 
 // TODO(auth): there's no session/auth middleware yet (that's its own
@@ -71,7 +76,7 @@ func toAccountResponse(a *account.Account) accountResponse {
 func (h *AccountHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var body createAccountRequest
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		WriteError(w, apperr.Validation(apperr.FieldError{Field: "body", Message: "invalid JSON body"}))
+		tallyhttp.WriteError(w, apperr.Validation(apperr.FieldError{Field: "body", Message: "invalid JSON body"}))
 		return
 	}
 
@@ -84,7 +89,7 @@ func (h *AccountHandler) Create(w http.ResponseWriter, r *http.Request) {
 		Color:                    body.Color,
 	})
 	if err != nil {
-		WriteError(w, err)
+		tallyhttp.WriteError(w, err)
 		return
 	}
 
@@ -95,13 +100,13 @@ func (h *AccountHandler) Create(w http.ResponseWriter, r *http.Request) {
 func (h *AccountHandler) Get(w http.ResponseWriter, r *http.Request) {
 	id, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
-		WriteError(w, apperr.Validation(apperr.FieldError{Field: "id", Message: "must be a valid UUID"}))
+		tallyhttp.WriteError(w, apperr.Validation(apperr.FieldError{Field: "id", Message: "must be a valid UUID"}))
 		return
 	}
 
 	a, err := h.service.GetAccount(r.Context(), id, hardcodedUserID)
 	if err != nil {
-		WriteError(w, err)
+		tallyhttp.WriteError(w, err)
 		return
 	}
 
@@ -132,7 +137,7 @@ func (h *AccountHandler) List(w http.ResponseWriter, r *http.Request) {
 		SortDirection: sorting.Direction(q.Get("sort_direction")),
 	})
 	if err != nil {
-		WriteError(w, err)
+		tallyhttp.WriteError(w, err)
 		return
 	}
 

@@ -6,13 +6,24 @@ package generated
 
 import (
 	"context"
-
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Querier interface {
+	CountAccountsByFilters(ctx context.Context, arg CountAccountsByFiltersParams) (int64, error)
 	CreateAccount(ctx context.Context, arg CreateAccountParams) (Account, error)
-	GetAccountByID(ctx context.Context, id pgtype.UUID) (Account, error)
+	GetAccountByID(ctx context.Context, arg GetAccountByIDParams) (Account, error)
+	// sort_by/sort_dir are a closed, validated enum (see account.SortBy /
+	// account.SortDirection) — never a raw client string — so this stays fully
+	// parameterized with no dynamic SQL construction. Only created_at is backed by
+	// an index (idx_accounts_user_id_active); name/type/currency sort over the
+	// already user_id-filtered rows in memory, which is fine at this table's
+	// per-user cardinality (see CLAUDE.md §6).
+	ListAccountsByFilters(ctx context.Context, arg ListAccountsByFiltersParams) ([]Account, error)
+	// account_exists is scoped to this user too: a row that exists but belongs to
+	// someone else must look identical to a row that doesn't exist at all, so the
+	// response never confirms another user's account ID is valid.
+	SoftDeleteAccount(ctx context.Context, arg SoftDeleteAccountParams) (SoftDeleteAccountRow, error)
+	UpdateAccountByID(ctx context.Context, arg UpdateAccountByIDParams) (Account, error)
 }
 
 var _ Querier = (*Queries)(nil)

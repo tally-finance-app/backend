@@ -293,4 +293,5 @@ tool (
 	github.com/evilmartians/lefthook
 	github.com/golangci/golangci-lint/v2/cmd/golangci-lint
 	github.com/sqlc-dev/sqlc/cmd/sqlc
+	honnef.co/go/tools/cmd/staticcheck
 )

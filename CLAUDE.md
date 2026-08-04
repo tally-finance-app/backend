@@ -1,8 +1,17 @@
 # Tally — Personal Finance Tracker
 
-Self-contained project reference for Claude Code. This file is meant to make Notion/Linear lookups unnecessary for day-to-day work — if something here goes stale, fix it here first.
+Self-contained project reference for Claude Code. This file is meant to make Linear lookups unnecessary for day-to-day work — if something here goes stale, fix it here first.
 
-Source of truth: this file is self-contained by design (Claude Code shouldn't need to fetch Notion mid-session). If this file and the Notion Requirements & Domain Model doc ever disagree, Notion is canonical — update this file to match, then note the fix in your next commit. Check for drift periodically, not just when something visibly breaks.
+Full specs live in this repo under `.docs/`, not Notion:
+
+- `.docs/requirements-and-domain-model.md` — domain entities, business rules, MVP scope
+- `.docs/api-contract.md` — REST endpoints, conventions, request/response shapes
+- `.docs/product-roadmap.md` — phased roadmap for everything deferred out of MVP
+- `.docs/er-diagram.md` — Mermaid ER diagram of the schema
+
+(These used to live in Notion; the Notion pages now just point here — see each file's own history for why.)
+
+Source of truth: this file is a condensed, day-to-day duplicate of what matters from the docs above — kept self-contained so Claude Code doesn't need to open them for every question. If this file and a `.docs/*.md` file ever disagree, the `.docs/` file is canonical — update this file to match. **Any change to domain rules, API shape, or roadmap phasing must be made in the relevant `.docs/*.md` file first, with a dated entry appended to that file's `## Changelog` section explaining the reasoning (why, not just what changed) — before or alongside updating this file or the code.** Check for drift periodically, not just when something visibly breaks.
 
 ## 1. Purpose & Goals
 
@@ -21,8 +30,8 @@ within reason. A genuinely usable app is a secondary outcome, not the driver of 
 - **Frontend (future phase, not yet started):** Angular + TypeScript, consuming the REST API.
 - **Git host:** GitHub. CI is GitHub Actions.
 - **Task tracking:** Linear (project "Go Backend", team "Tally Finance App").
-  Specs live in Notion; this file duplicates what matters day-to-day so Claude Code doesn't need
-  to fetch either.
+  Specs live in this repo under `.docs/` (see intro above); this file duplicates what matters
+  day-to-day so Claude Code doesn't need to open either.
 
 ## 3. Architecture — Light DDD
 
@@ -53,10 +62,13 @@ internal/
   fx/
   user/
   platform/postgres/  repository implementations, sqlc-generated code
-  transport/http/      handlers, routing, middleware
+  transport/http/      routing, middleware, error mapping
+    handlers/           one file per domain: request parsing/response writing only
 cmd/
   api/                main.go — HTTP server
   jobs/                main.go — statement generation, FX caching
+  migrate/             main.go — thin wrapper around golang-migrate (up/down), run via
+                        make migrate-up / migrate-down / migrate-verify
 ```
 
 **Every domain package should look like this** (the "reference vertical slice," built first as
@@ -70,7 +82,11 @@ internal/<domain>/
 ```
 
 Postgres implementation goes in `internal/platform/postgres/<domain>_repository.go`.
-HTTP handlers go in `internal/transport/http/<domain>_handler.go`.
+HTTP handlers go in `internal/transport/http/handlers/<domain>_handler.go` — a separate
+package (`handlers`) from routing/middleware/error-mapping (`internal/transport/http` itself),
+so `NewRouter` accepts handlers via a small structural interface (e.g. `accountRoutes` in
+`router.go`) rather than importing the `handlers` package directly, avoiding an import cycle
+with `WriteError`.
 
 ## 4. Money & Currency Rules
 
@@ -78,6 +94,9 @@ HTTP handlers go in `internal/transport/http/<domain>_handler.go`.
   float. Field names always end in `_minor_units`.
 - **Not all currencies use 2 decimal places** — JPY/KRW use 0, some currencies use 3. Look up the
   minor-unit exponent per currency; never assume ×100.
+- **MVP only supports `CAD`, `USD`, `BRL`** — a closed enum (`internal/shared/currency.Code`), not
+  open-ended multi-currency yet. All three happen to use a 2-decimal minor unit, so the rule above
+  is still untested in practice until a 0- or 3-decimal currency is added.
 - **FX rates** are stored as `numeric(20,10)`, never float.
 - **Rounding rule:** round-half-up to the nearest minor unit, applied consistently everywhere a
   conversion happens. Don't reinvent this per call site — use the shared conversion helper.
@@ -114,10 +133,17 @@ sum(transactions) + sum(transfers in) - sum(transfers out)`. Caching is a delibe
 ## 6. API Conventions
 
 - **Errors:** RFC 9457 Problem Details (`Content-Type: application/problem+json`) everywhere.
-  `type` is the stable, machine-readable identifier (`validation-error`, `not-found`,
+  `type` is the stable, machine-readable identifier (`validation_error`, `not_found`,
   `unauthorized`, `forbidden`, `conflict`) — never match on `title`/`detail` text.
-- **Pagination:** every list endpoint takes `?page=1&page_size=50` (max 200), responds with
+- **Pagination:** every list endpoint takes `?page=1&page_size=50`, where `page_size` must be one
+  of `10, 25, 50, 100, 200` (a fixed allowlist, not just a range check — see
+  `internal/shared/pagination.PageSize`) — responds with
   `{ "data": [...], "page", "page_size", "total" }`.
+- **Ordering:** every list query must have a stable, deterministic `ORDER BY` — never paginate
+  over an unordered result set. Default order is `created_at ASC`, with `id` as a secondary sort
+  key so rows sharing a timestamp still paginate deterministically across pages. The index backing
+  a list query should carry the same trailing columns as its `ORDER BY`, so pagination doesn't
+  force a separate sort step.
 - **Status codes:** `200` GET/PATCH, `201` POST-creates, `204` DELETE/logout.
 - **Auth:** Bearer token in `Authorization` header. Passwords hashed with bcrypt/argon2 — never
   hand-rolled.
@@ -154,6 +180,7 @@ make verify-generate       # fail if committed generated code is stale
 make build                  # go build ./...
 make vet                     # go vet ./...
 make lint                     # golangci-lint run
+make staticcheck                # staticcheck ./...
 make test                      # unit tests only, no database needed
 make test-integration           # everything, incl. real Postgres (needs db-up first)
 make ci                          # what CI runs, end to end
@@ -184,6 +211,10 @@ installed, and a migration that silently changes a Go type should be visible in 
 `make verify-generate` (`sqlc diff`) is the CI guard that keeps it current. Never hand-edit
 anything under `internal/platform/postgres/generated/`, and never put a hand-written file there.
 
+**Whenever the Makefile changes** — a target added, renamed, or removed — update `.zed/tasks.json`
+to match in the same change. Zed's task runner is a separate, hand-maintained list; it does not
+read the Makefile, so it silently drifts otherwise.
+
 ## 10. Git & Linear Workflow
 
 - Branch naming follows Linear's convention: `<username>/tally-<issue-number>-<slug>` (Linear
@@ -196,8 +227,9 @@ anything under `internal/platform/postgres/generated/`, and never put a hand-wri
 
 ## 11. Roadmap Awareness
 
-Things deliberately **NOT** in this MVP — don't build them "while you're in there," even if it
-seems convenient:
+Condensed from `.docs/product-roadmap.md` (the canonical, phase-by-phase version — update it first
+if a phase changes, then update this list to match). Things deliberately **NOT** in this MVP —
+don't build them "while you're in there," even if it seems convenient:
 
 - Cached/denormalized balances (Phase 2 — deliberate cache-invalidation learning exercise)
 - Household Settlement / expense splitting (Phase 3)

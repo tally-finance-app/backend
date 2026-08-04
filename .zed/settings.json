@@ -1,0 +1,34 @@
+{
+  "file_scan_exclusions": [
+    "**/.git",
+    "**/.svn",
+    "**/.hg",
+    "**/CVS",
+    "**/.DS_Store",
+    "**/Thumbs.db",
+    "**/.classpath",
+    "**/.settings",
+    "internal/platform/postgres/generated",
+    "bin"
+  ],
+  "languages": {
+    "Go": {
+      "tab_size": 4,
+      "hard_tabs": true,
+      "format_on_save": "on",
+      "formatter": "language_server",
+      "code_actions_on_format": {
+        "source.organizeImports": true
+      }
+    }
+  },
+  "lsp": {
+    "gopls": {
+      "initialization_options": {
+        "usePlaceholders": true,
+        "staticcheck": true,
+        "gofumpt": false
+      }
+    }
+  }
+}

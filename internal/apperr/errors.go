@@ -1,3 +1,6 @@
+// Package apperr defines the shared application error type used across
+// the service and transport layers to represent deliberate, well-known
+// failures (not found, conflict, validation) as opposed to unexpected ones.
 package apperr
 
 // Kind is a small closed set of "categories" of failure.
@@ -27,9 +30,8 @@ type AppError struct {
 	Fields  []FieldError // only populated for validation errors
 }
 
-// Error() is the ONLY method required to satisfy Go's built-in
-// `error` interface: `type error interface { Error() string }`.
-// This is what makes *AppError usable anywhere an `error` is expected.
+// Error satisfies Go's built-in error interface, which is what makes
+// *AppError usable anywhere an `error` is expected.
 func (e *AppError) Error() string {
 	return e.Message
 }

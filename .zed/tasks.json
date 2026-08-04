@@ -1,0 +1,37 @@
+[
+  {
+    "label": "make build",
+    "command": "make build",
+    "cwd": "$ZED_WORKTREE_ROOT"
+  },
+  {
+    "label": "make vet",
+    "command": "make vet",
+    "cwd": "$ZED_WORKTREE_ROOT"
+  },
+  {
+    "label": "make lint",
+    "command": "make lint",
+    "cwd": "$ZED_WORKTREE_ROOT"
+  },
+  {
+    "label": "make staticcheck",
+    "command": "make staticcheck",
+    "cwd": "$ZED_WORKTREE_ROOT"
+  },
+  {
+    "label": "make test",
+    "command": "make test",
+    "cwd": "$ZED_WORKTREE_ROOT"
+  },
+  {
+    "label": "make test-integration",
+    "command": "make test-integration",
+    "cwd": "$ZED_WORKTREE_ROOT"
+  },
+  {
+    "label": "make migrate-verify",
+    "command": "make migrate-verify",
+    "cwd": "$ZED_WORKTREE_ROOT"
+  }
+]

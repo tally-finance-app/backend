@@ -1,4 +1,4 @@
-package tallyhttp
+package http
 
 import (
 	"fmt"

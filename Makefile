@@ -29,6 +29,7 @@ BIN := $(CURDIR)/bin
 SQLC          := $(BIN)/sqlc
 GOLANGCI_LINT := $(BIN)/golangci-lint
 LEFTHOOK      := $(BIN)/lefthook
+STATICCHECK   := $(BIN)/staticcheck
 
 TOOLS_DEPS := tools/go.mod tools/go.sum
 
@@ -44,11 +45,15 @@ $(LEFTHOOK): $(TOOLS_DEPS)
 	@mkdir -p $(BIN)
 	GOBIN=$(BIN) go -C tools install github.com/evilmartians/lefthook
 
+$(STATICCHECK): $(TOOLS_DEPS)
+	@mkdir -p $(BIN)
+	GOBIN=$(BIN) go -C tools install honnef.co/go/tools/cmd/staticcheck
+
 .PHONY: tools tools-tidy tools-clean db-up db-down migrate-up migrate-down migrate-verify \
-        generate verify-generate build vet lint lint-fix test test-integration ci \
+        generate verify-generate build vet lint lint-fix staticcheck test test-integration ci \
         hooks hooks-uninstall
 
-tools: $(SQLC) $(GOLANGCI_LINT) $(LEFTHOOK)
+tools: $(SQLC) $(GOLANGCI_LINT) $(LEFTHOOK) $(STATICCHECK)
 
 tools-tidy:
 	go -C tools mod tidy
@@ -110,6 +115,9 @@ lint: $(GOLANGCI_LINT)
 
 lint-fix: $(GOLANGCI_LINT)
 	$(GOLANGCI_LINT) run --fix
+
+staticcheck: $(STATICCHECK)
+	$(STATICCHECK) ./...
 
 # Unit tests only. -short makes DB-backed tests skip, so this needs no Postgres.
 test:

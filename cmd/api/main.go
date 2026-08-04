@@ -7,8 +7,13 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/tally-finance-app/backend/internal/account"
 	"github.com/tally-finance-app/backend/internal/config"
+	"github.com/tally-finance-app/backend/internal/platform/postgres"
 	tallyhttp "github.com/tally-finance-app/backend/internal/transport/http"
+	"github.com/tally-finance-app/backend/internal/transport/http/handlers"
 )
 
 func main() {
@@ -38,7 +43,20 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
 	defer stop() // releases the signal notification when main() returns
 
-	router := tallyhttp.NewRouter(logger)
+	pool, err := pgxpool.New(ctx, cfg.Database.URL)
+	if err != nil {
+		logger.Error("failed to connect to database", "err", err)
+		os.Exit(1)
+	}
+	defer pool.Close()
+
+	accountRepo := postgres.NewAccountRepository(pool)
+	accountService := account.NewService(accountRepo)
+	accountHandler := handlers.NewAccountHandler(accountService)
+
+	router := tallyhttp.NewRouter(logger, tallyhttp.Handlers{
+		Account: accountHandler,
+	})
 	if err := tallyhttp.Serve(ctx, router, cfg.Server.Port, logger); err != nil {
 		logger.Error("server error", "err", err)
 		os.Exit(1)

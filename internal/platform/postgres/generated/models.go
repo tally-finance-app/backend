@@ -5,26 +5,27 @@
 package generated
 
 import (
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Account struct {
-	ID                       pgtype.UUID        `json:"id"`
-	UserID                   pgtype.UUID        `json:"user_id"`
+	ID                       uuid.UUID          `json:"id"`
+	UserID                   uuid.UUID          `json:"user_id"`
 	Name                     string             `json:"name"`
 	Type                     string             `json:"type"`
 	Currency                 string             `json:"currency"`
 	InitialBalanceMinorUnits int64              `json:"initial_balance_minor_units"`
-	Color                    pgtype.Text        `json:"color"`
-	Icon                     pgtype.Text        `json:"icon"`
+	Color                    string             `json:"color"`
+	Icon                     string             `json:"icon"`
 	CreatedAt                pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt                pgtype.Timestamptz `json:"updated_at"`
 	DeletedAt                pgtype.Timestamptz `json:"deleted_at"`
 }
 
 type Category struct {
-	ID               pgtype.UUID        `json:"id"`
-	UserID           pgtype.UUID        `json:"user_id"`
+	ID               uuid.UUID          `json:"id"`
+	UserID           uuid.UUID          `json:"user_id"`
 	Key              string             `json:"key"`
 	Name             string             `json:"name"`
 	ParentCategoryID pgtype.UUID        `json:"parent_category_id"`
@@ -37,44 +38,44 @@ type Category struct {
 }
 
 type CreditCard struct {
-	ID                    pgtype.UUID        `json:"id"`
-	UserID                pgtype.UUID        `json:"user_id"`
+	ID                    uuid.UUID          `json:"id"`
+	UserID                uuid.UUID          `json:"user_id"`
 	Name                  string             `json:"name"`
 	Currency              string             `json:"currency"`
 	CreditLimitMinorUnits int64              `json:"credit_limit_minor_units"`
 	CloseDay              int32              `json:"close_day"`
 	DueDay                int32              `json:"due_day"`
-	Color                 pgtype.Text        `json:"color"`
-	Icon                  pgtype.Text        `json:"icon"`
+	Color                 string             `json:"color"`
+	Icon                  string             `json:"icon"`
 	CreatedAt             pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt             pgtype.Timestamptz `json:"updated_at"`
 	DeletedAt             pgtype.Timestamptz `json:"deleted_at"`
 }
 
 type FxRate struct {
-	ID           pgtype.UUID    `json:"id"`
+	ID           uuid.UUID      `json:"id"`
 	CurrencyPair string         `json:"currency_pair"`
 	Rate         pgtype.Numeric `json:"rate"`
 	Date         pgtype.Date    `json:"date"`
 }
 
 type Household struct {
-	ID          pgtype.UUID        `json:"id"`
+	ID          uuid.UUID          `json:"id"`
 	Name        string             `json:"name"`
-	AdminUserID pgtype.UUID        `json:"admin_user_id"`
+	AdminUserID uuid.UUID          `json:"admin_user_id"`
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 }
 
 type HouseholdMember struct {
-	HouseholdID pgtype.UUID        `json:"household_id"`
-	UserID      pgtype.UUID        `json:"user_id"`
+	HouseholdID uuid.UUID          `json:"household_id"`
+	UserID      uuid.UUID          `json:"user_id"`
 	Status      string             `json:"status"`
 	JoinedAt    pgtype.Timestamptz `json:"joined_at"`
 }
 
 type Statement struct {
-	ID                    pgtype.UUID        `json:"id"`
-	CreditCardID          pgtype.UUID        `json:"credit_card_id"`
+	ID                    uuid.UUID          `json:"id"`
+	CreditCardID          uuid.UUID          `json:"credit_card_id"`
 	CycleStartDate        pgtype.Date        `json:"cycle_start_date"`
 	CycleEndDate          pgtype.Date        `json:"cycle_end_date"`
 	DueDate               pgtype.Date        `json:"due_date"`
@@ -85,18 +86,18 @@ type Statement struct {
 }
 
 type StatementAdjustment struct {
-	ID                    pgtype.UUID        `json:"id"`
-	StatementID           pgtype.UUID        `json:"statement_id"`
-	TransactionID         pgtype.UUID        `json:"transaction_id"`
+	ID                    uuid.UUID          `json:"id"`
+	StatementID           uuid.UUID          `json:"statement_id"`
+	TransactionID         uuid.UUID          `json:"transaction_id"`
 	AdjustmentType        string             `json:"adjustment_type"`
 	AmountDeltaMinorUnits int64              `json:"amount_delta_minor_units"`
 	CreatedAt             pgtype.Timestamptz `json:"created_at"`
 }
 
 type Transaction struct {
-	ID                        pgtype.UUID        `json:"id"`
+	ID                        uuid.UUID          `json:"id"`
 	SourceType                string             `json:"source_type"`
-	SourceID                  pgtype.UUID        `json:"source_id"`
+	SourceID                  uuid.UUID          `json:"source_id"`
 	CategoryID                pgtype.UUID        `json:"category_id"`
 	AmountMinorUnits          int64              `json:"amount_minor_units"`
 	Currency                  string             `json:"currency"`
@@ -112,11 +113,11 @@ type Transaction struct {
 }
 
 type Transfer struct {
-	ID               pgtype.UUID        `json:"id"`
+	ID               uuid.UUID          `json:"id"`
 	FromType         string             `json:"from_type"`
-	FromID           pgtype.UUID        `json:"from_id"`
+	FromID           uuid.UUID          `json:"from_id"`
 	ToType           string             `json:"to_type"`
-	ToID             pgtype.UUID        `json:"to_id"`
+	ToID             uuid.UUID          `json:"to_id"`
 	AmountMinorUnits int64              `json:"amount_minor_units"`
 	FromCurrency     string             `json:"from_currency"`
 	ToCurrency       string             `json:"to_currency"`
@@ -129,7 +130,7 @@ type Transfer struct {
 
 // Registered users of the Tally application.
 type User struct {
-	ID                pgtype.UUID        `json:"id"`
+	ID                uuid.UUID          `json:"id"`
 	Email             string             `json:"email"`
 	PasswordHash      string             `json:"password_hash"`
 	DisplayName       string             `json:"display_name"`

@@ -3,7 +3,7 @@ CREATE TABLE users (
     email               varchar NOT NULL UNIQUE,
     password_hash       varchar NOT NULL,
     display_name        varchar NOT NULL,
-    avatar_url          varchar,
+    avatar_key          varchar,
     locale              varchar NOT NULL,
     reporting_currency  varchar NOT NULL,
     created_at          timestamptz NOT NULL,

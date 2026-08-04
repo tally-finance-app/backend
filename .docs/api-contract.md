@@ -88,7 +88,7 @@ Returns the authenticated user's profile.
 
 ### `PATCH /users/me` — `200`
 
-Updates `display_name`, `avatar_url`, `locale`, and/or `reporting_currency`.
+Updates `display_name`, `avatar_key`, `locale`, and/or `reporting_currency`.
 
 ## Households
 

@@ -121,7 +121,7 @@ since the HTTP server skeleton is where that middleware actually lives.
 - `email` (unique)
 - `password_hash`
 - `display_name` — shown in household contexts (e.g. shared transaction lists) instead of email
-- `avatar_url` (nullable) — actual upload/storage pipeline deferred until the frontend is built
+- `avatar_key` (nullable) — actual upload/storage pipeline deferred until the frontend is built
 - `locale` (e.g. `en`, `pt-BR`) — default locale for the frontend; also used once, at registration,
   to translate the user's seeded default categories into their language (see Category below)
 - `reporting_currency` — currency used for aggregate reports (e.g. net worth)
@@ -332,6 +332,10 @@ the fact, even if today's rate differs).
   *Reasoning:* real investment tracking (holdings, valuations, cost basis) is materially more
   complex than a simple balance and isn't worth the scope for TALLY-137's reference vertical slice
   or the MVP.
+- **2026-08-04** — `User.avatar_url` renamed to `User.avatar_key`. *Reasoning:* the actual
+  upload/storage pipeline is deferred until the frontend is built (see field description above),
+  so the column should hold a storage object key, not a directly resolvable URL — baking in a URL
+  now would couple the schema to whichever storage provider/CDN gets picked later.
 - **2026-08-03** — `CreditCard.color`/`CreditCard.icon` changed from nullable to required, mirroring
   the Account decision. *Reasoning:* consistency across the two visually-presented money-source
   entities; unlike Account, CreditCard has no `type` enum to derive an icon from, so both fields

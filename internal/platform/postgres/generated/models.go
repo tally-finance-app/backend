@@ -134,7 +134,7 @@ type User struct {
 	Email             string             `json:"email"`
 	PasswordHash      string             `json:"password_hash"`
 	DisplayName       string             `json:"display_name"`
-	AvatarUrl         pgtype.Text        `json:"avatar_url"`
+	AvatarKey         pgtype.Text        `json:"avatar_key"`
 	Locale            string             `json:"locale"`
 	ReportingCurrency string             `json:"reporting_currency"`
 	CreatedAt         pgtype.Timestamptz `json:"created_at"`

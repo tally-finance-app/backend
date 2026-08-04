@@ -34,7 +34,7 @@ erDiagram
         string email
         string password_hash
         string display_name
-        string avatar_url
+        string avatar_key
         string locale
         string reporting_currency
         timestamp created_at

@@ -11,6 +11,8 @@ import (
 type Querier interface {
 	CountAccountsByFilters(ctx context.Context, arg CountAccountsByFiltersParams) (int64, error)
 	CreateAccount(ctx context.Context, arg CreateAccountParams) (Account, error)
+	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
+	ExistsUserByEmail(ctx context.Context, email string) (bool, error)
 	GetAccountByID(ctx context.Context, arg GetAccountByIDParams) (Account, error)
 	// sort_by/sort_dir are a closed, validated enum (see account.SortBy /
 	// account.SortDirection) — never a raw client string — so this stays fully

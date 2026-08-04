@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 
@@ -28,33 +29,37 @@ func TestCreateAccountAndGetAccountByID(t *testing.T) {
 	}
 	defer pool.Close()
 
-	var userID pgtype.UUID
+	userID := uuid.New()
 	email := fmt.Sprintf("test-%d@example.com", time.Now().UnixNano())
-	err = pool.QueryRow(ctx, `
-		INSERT INTO users (email, password_hash, display_name, locale, reporting_currency)
-		VALUES ($1, 'hash', 'Test User', 'en-US', 'USD')
-		RETURNING id
-	`, email).Scan(&userID)
+	seededAt := time.Now().UTC()
+	_, err = pool.Exec(ctx, `
+		INSERT INTO users (id, email, password_hash, display_name, locale, reporting_currency, created_at, updated_at)
+		VALUES ($1, $2, 'hash', 'Test User', 'en-US', 'USD', $3, $3)
+	`, userID, email, seededAt)
 	if err != nil {
 		t.Fatalf("failed to seed prerequisite user: %v", err)
 	}
 
 	queries := generated.New(pool)
 
+	now := time.Now().UTC()
 	created, err := queries.CreateAccount(ctx, generated.CreateAccountParams{
+		ID:                       uuid.New(),
 		UserID:                   userID,
 		Name:                     "Checking",
 		Type:                     "checking",
 		Currency:                 "USD",
 		InitialBalanceMinorUnits: 10000,
-		Color:                    pgtype.Text{String: "#00FF00", Valid: true},
-		Icon:                     pgtype.Text{String: "wallet", Valid: true},
+		Color:                    "#00FF00",
+		Icon:                     "wallet",
+		CreatedAt:                pgtype.Timestamptz{Time: now, Valid: true},
+		UpdatedAt:                pgtype.Timestamptz{Time: now, Valid: true},
 	})
 	if err != nil {
 		t.Fatalf("CreateAccount failed: %v", err)
 	}
 
-	fetched, err := queries.GetAccountByID(ctx, created.ID)
+	fetched, err := queries.GetAccountByID(ctx, generated.GetAccountByIDParams{ID: created.ID, UserID: userID})
 	if err != nil {
 		t.Fatalf("GetAccountByID failed: %v", err)
 	}

@@ -21,6 +21,28 @@ type FieldError struct {
 	Message string `json:"message"`
 }
 
+// FieldErrors builds one FieldError per rule failure for a single field. If
+// err wraps multiple errors (e.g. returned by errors.Join, as
+// validate.Password does), it splits them into one FieldError each; a plain
+// error yields a single-element slice. A nil err yields nil.
+func FieldErrors(field string, err error) []FieldError {
+	if err == nil {
+		return nil
+	}
+
+	joined, ok := err.(interface{ Unwrap() []error })
+	if !ok {
+		return []FieldError{{Field: field, Message: err.Error()}}
+	}
+
+	errs := joined.Unwrap()
+	fields := make([]FieldError, 0, len(errs))
+	for _, e := range errs {
+		fields = append(fields, FieldError{Field: field, Message: e.Error()})
+	}
+	return fields
+}
+
 // AppError is our one shared error type. Every error your service
 // layer deliberately creates (as opposed to something unexpected
 // like a DB failure) should be one of these.

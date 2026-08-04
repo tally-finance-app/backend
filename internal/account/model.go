@@ -1,0 +1,113 @@
+package account
+
+import (
+	"strings"
+	"time"
+
+	"github.com/google/uuid"
+
+	"github.com/tally-finance-app/backend/internal/apperr"
+	"github.com/tally-finance-app/backend/internal/shared/currency"
+)
+
+type AccountType string
+
+const (
+	AccountTypeChecking AccountType = "checking"
+	AccountTypeSavings  AccountType = "savings"
+	AccountTypeCash     AccountType = "cash"
+)
+
+func (t AccountType) Valid() bool {
+	switch t {
+	case AccountTypeCash, AccountTypeSavings, AccountTypeChecking:
+		return true
+	default:
+		return false
+	}
+}
+
+var accountTypeIcons = map[AccountType]string{
+	AccountTypeChecking: "wallet",
+	AccountTypeSavings:  "piggy-bank",
+	AccountTypeCash:     "banknote",
+}
+
+// IconForType returns the fixed icon associated with an account type.
+// Icon is never independently settable — it is always derived from Type,
+// so the two can never drift.
+func IconForType(t AccountType) string {
+	return accountTypeIcons[t]
+}
+
+type Account struct {
+	ID                       uuid.UUID
+	UserID                   uuid.UUID
+	Name                     string
+	Type                     AccountType
+	Currency                 currency.Code
+	InitialBalanceMinorUnits int64
+	Color                    string
+	Icon                     string
+	CreatedAt                time.Time
+	UpdatedAt                time.Time
+	DeletedAt                *time.Time
+}
+
+type NewAccountParams struct {
+	UserID                   uuid.UUID
+	Name                     string
+	Type                     AccountType
+	Currency                 currency.Code
+	InitialBalanceMinorUnits int64
+	Color                    string
+}
+
+func NewAccount(params NewAccountParams) (*Account, error) {
+	var fields []apperr.FieldError
+
+	if params.UserID == uuid.Nil {
+		fields = append(fields, apperr.FieldError{Field: "user_id", Message: "user id is required"})
+	}
+	if strings.TrimSpace(params.Name) == "" {
+		fields = append(fields, apperr.FieldError{Field: "name", Message: "name is required"})
+	}
+	if strings.TrimSpace(params.Color) == "" {
+		fields = append(fields, apperr.FieldError{Field: "color", Message: "color is required"})
+	}
+	if !params.Type.Valid() {
+		fields = append(fields, apperr.FieldError{Field: "type", Message: "type must be one of checking, savings, cash"})
+	}
+	if !params.Currency.Valid() {
+		fields = append(fields, apperr.FieldError{Field: "currency", Message: "unsupported currency"})
+	}
+
+	if len(fields) > 0 {
+		return nil, apperr.Validation(fields...)
+	}
+
+	now := time.Now().UTC()
+	return &Account{
+		ID:                       uuid.New(),
+		UserID:                   params.UserID,
+		Name:                     params.Name,
+		Type:                     params.Type,
+		Currency:                 params.Currency,
+		InitialBalanceMinorUnits: params.InitialBalanceMinorUnits,
+		Color:                    params.Color,
+		Icon:                     IconForType(params.Type),
+		CreatedAt:                now,
+		UpdatedAt:                now,
+	}, nil
+}
+
+// SetType changes the account's type and keeps Icon in sync — always use this
+// instead of assigning Type directly.
+func (a *Account) SetType(t AccountType) error {
+	if !t.Valid() {
+		return apperr.Validation(apperr.FieldError{Field: "type", Message: "type must be one of checking, savings, cash"})
+	}
+	a.Type = t
+	a.Icon = IconForType(t)
+	return nil
+}

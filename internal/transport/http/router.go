@@ -11,7 +11,7 @@ import (
 // NewRouter builds and returns the fully configured HTTP router.
 // This is the one function cmd/api/main.go calls to get something
 // it can hand to an http.Server.
-func NewRouter(logger *slog.Logger) http.Handler {
+func NewRouter(logger *slog.Logger, accountHandler *AccountHandler) http.Handler {
 	r := chi.NewRouter()
 
 	// Order matters: each middleware wraps everything mounted after it.
@@ -23,10 +23,11 @@ func NewRouter(logger *slog.Logger) http.Handler {
 
 	r.Get("/health", healthHandler)
 
-	// Future domain routes get mounted here, e.g.:
-	// r.Route("/accounts", func(r chi.Router) {
-	// 	r.Get("/{id}", accountHandler.Get)
-	// })
+	r.Route("/api/v1/accounts", func(r chi.Router) {
+		r.Post("/", accountHandler.Create)
+		r.Get("/", accountHandler.List)
+		r.Get("/{id}", accountHandler.Get)
+	})
 
 	return r
 }

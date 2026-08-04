@@ -175,6 +175,7 @@ make verify-generate       # fail if committed generated code is stale
 make build                  # go build ./...
 make vet                     # go vet ./...
 make lint                     # golangci-lint run
+make staticcheck                # staticcheck ./...
 make test                      # unit tests only, no database needed
 make test-integration           # everything, incl. real Postgres (needs db-up first)
 make ci                          # what CI runs, end to end
@@ -204,6 +205,10 @@ so build/vet/test are covered by CI on the PR.
 installed, and a migration that silently changes a Go type should be visible in code review.
 `make verify-generate` (`sqlc diff`) is the CI guard that keeps it current. Never hand-edit
 anything under `internal/platform/postgres/generated/`, and never put a hand-written file there.
+
+**Whenever the Makefile changes** — a target added, renamed, or removed — update `.zed/tasks.json`
+to match in the same change. Zed's task runner is a separate, hand-maintained list; it does not
+read the Makefile, so it silently drifts otherwise.
 
 ## 10. Git & Linear Workflow
 

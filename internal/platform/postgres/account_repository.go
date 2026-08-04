@@ -70,6 +70,18 @@ func (r *AccountRepository) List(ctx context.Context, filter account.ListFilter)
 	return accounts, nil
 }
 
+func (r *AccountRepository) Count(ctx context.Context, filter account.ListFilter) (int64, error) {
+	total, err := r.q.CountAccountsByFilters(ctx, generated.CountAccountsByFiltersParams{
+		UserID:   filter.UserID,
+		Type:     toNullableText(string(filter.Type)),
+		Currency: toNullableText(string(filter.Currency)),
+	})
+	if err != nil {
+		return 0, fmt.Errorf("count accounts: %w", err)
+	}
+	return total, nil
+}
+
 func (r *AccountRepository) Update(ctx context.Context, a *account.Account) error {
 	updated, err := r.q.UpdateAccountByID(ctx, generated.UpdateAccountByIDParams{
 		ID:        a.ID,

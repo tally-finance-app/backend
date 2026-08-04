@@ -45,8 +45,8 @@ type CreditCard struct {
 	CreditLimitMinorUnits int64              `json:"credit_limit_minor_units"`
 	CloseDay              int32              `json:"close_day"`
 	DueDay                int32              `json:"due_day"`
-	Color                 pgtype.Text        `json:"color"`
-	Icon                  pgtype.Text        `json:"icon"`
+	Color                 string             `json:"color"`
+	Icon                  string             `json:"icon"`
 	CreatedAt             pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt             pgtype.Timestamptz `json:"updated_at"`
 	DeletedAt             pgtype.Timestamptz `json:"deleted_at"`

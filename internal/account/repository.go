@@ -43,6 +43,7 @@ type Repository interface {
 	Create(ctx context.Context, a *Account) error
 	GetByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*Account, error)
 	List(ctx context.Context, filter ListFilter) ([]*Account, error)
+	Count(ctx context.Context, filter ListFilter) (int64, error)
 	Update(ctx context.Context, a *Account) error
 	SoftDelete(ctx context.Context, id uuid.UUID, userID uuid.UUID, deletedAt time.Time) error
 }

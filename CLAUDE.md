@@ -116,8 +116,15 @@ sum(transactions) + sum(transfers in) - sum(transfers out)`. Caching is a delibe
 - **Errors:** RFC 9457 Problem Details (`Content-Type: application/problem+json`) everywhere.
   `type` is the stable, machine-readable identifier (`validation-error`, `not-found`,
   `unauthorized`, `forbidden`, `conflict`) — never match on `title`/`detail` text.
-- **Pagination:** every list endpoint takes `?page=1&page_size=50` (max 200), responds with
+- **Pagination:** every list endpoint takes `?page=1&page_size=50`, where `page_size` must be one
+  of `10, 25, 50, 100, 200` (a fixed allowlist, not just a range check — see
+  `internal/shared/pagination.PageSize`) — responds with
   `{ "data": [...], "page", "page_size", "total" }`.
+- **Ordering:** every list query must have a stable, deterministic `ORDER BY` — never paginate
+  over an unordered result set. Default order is `created_at ASC`, with `id` as a secondary sort
+  key so rows sharing a timestamp still paginate deterministically across pages. The index backing
+  a list query should carry the same trailing columns as its `ORDER BY`, so pagination doesn't
+  force a separate sort step.
 - **Status codes:** `200` GET/PATCH, `201` POST-creates, `204` DELETE/logout.
 - **Auth:** Bearer token in `Authorization` header. Passwords hashed with bcrypt/argon2 — never
   hand-rolled.

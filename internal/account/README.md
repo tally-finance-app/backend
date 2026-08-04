@@ -30,13 +30,13 @@ internal/platform/postgres/account_repository.go
                  sqlc-backed implementation of account.Repository. Only this file
                  (plus account_convert.go, account_queries.sql) knows sqlc/pgx exist.
 
-internal/transport/http/account_handler.go
+internal/transport/http/handlers/account_handler.go
                  AccountHandler — parses the HTTP request, calls the Service, writes
                  the HTTP response. No business logic here: validation and
                  persistence both happen in service.go/model.go, not the handler.
 
 cmd/api/main.go  Wires it together: pgxpool -> postgres.NewAccountRepository ->
-                 account.NewService -> tallyhttp.NewAccountHandler -> NewRouter.
+                 account.NewService -> handlers.NewAccountHandler -> NewRouter.
 ```
 
 ## Why this shape

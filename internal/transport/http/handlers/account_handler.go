@@ -124,8 +124,16 @@ type listAccountsResponse struct {
 func (h *AccountHandler) List(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 
-	page, _ := strconv.Atoi(q.Get("page"))
-	pageSize, _ := strconv.Atoi(q.Get("page_size"))
+	page, err := parseOptionalIntParam("page", q.Get("page"))
+	if err != nil {
+		tallyhttp.WriteError(w, err)
+		return
+	}
+	pageSize, err := parseOptionalIntParam("page_size", q.Get("page_size"))
+	if err != nil {
+		tallyhttp.WriteError(w, err)
+		return
+	}
 
 	result, err := h.service.ListAccounts(r.Context(), account.ListAccountsParams{
 		UserID:        hardcodedUserID,
@@ -159,6 +167,21 @@ func (h *AccountHandler) List(w http.ResponseWriter, r *http.Request) {
 		PageSize: respPageSize,
 		Total:    result.Total,
 	})
+}
+
+// parseOptionalIntParam parses raw as an int, treating an empty string as
+// "not provided" (returning 0) rather than an error. A non-empty but
+// malformed value is rejected as a validation_error, same as any other
+// malformed query param.
+func parseOptionalIntParam(field, raw string) (int, error) {
+	if raw == "" {
+		return 0, nil
+	}
+	v, err := strconv.Atoi(raw)
+	if err != nil {
+		return 0, apperr.Validation(apperr.FieldError{Field: field, Message: "must be an integer"})
+	}
+	return v, nil
 }
 
 // writeJSON marshals body before touching the ResponseWriter, same reasoning

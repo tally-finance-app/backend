@@ -17,12 +17,17 @@ type accountRoutes interface {
 	List(w http.ResponseWriter, r *http.Request)
 }
 
+type authRoutes interface {
+	Register(w http.ResponseWriter, r *http.Request)
+}
+
 // Handlers bundles per-domain handlers into a single value so NewRouter's
 // signature doesn't grow a parameter per domain. Each field is a small
 // structural interface (not the concrete *handlers.XHandler type) to avoid
 // an import cycle: handlers depends on this package for WriteError.
 type Handlers struct {
 	Account accountRoutes
+	Auth    authRoutes
 }
 
 // NewRouter builds and returns the fully configured HTTP router.
@@ -44,6 +49,10 @@ func NewRouter(logger *slog.Logger, h Handlers) http.Handler {
 		r.Post("/", h.Account.Create)
 		r.Get("/", h.Account.List)
 		r.Get("/{id}", h.Account.Get)
+	})
+
+	r.Route("/api/v1/auth", func(r chi.Router) {
+		r.Post("/register", h.Auth.Register)
 	})
 
 	return r

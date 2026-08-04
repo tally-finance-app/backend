@@ -37,7 +37,6 @@ CREATE INDEX idx_household_members_user_id ON household_members (user_id);
 CREATE TABLE categories (
     id                   uuid PRIMARY KEY,
     user_id              uuid NOT NULL REFERENCES users (id),
-    key                  varchar NOT NULL,
     name                 varchar NOT NULL,
     parent_category_id   uuid REFERENCES categories (id),
     type                 varchar NOT NULL,

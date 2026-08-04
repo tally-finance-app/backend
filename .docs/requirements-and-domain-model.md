@@ -247,15 +247,17 @@ strictly one-sided (spend/income only).
 ### Category
 
 - `id`
-- `key` — stable, non-translated identifier (e.g. `food.groceries`); the frontend maps this to its
-  own localized label rather than displaying `name` directly, since the app is localized
-- `name` — English reference/fallback label, not the source of truth for display
+- `user_id` — categories are per-user rows, not shared/global (see below)
+- `name` — the display label; translated once into the user's `locale` at seed/clone time (see §2
+  Localization), so this is the actual value shown, not a fallback the frontend re-translates
 - `parent_category_id` (nullable) — enables hierarchy (e.g. Food > Groceries, Food > Dining Out)
 - `type` — `income` | `expense`
+- `color`, `icon`
 
-System-provided defaults only in MVP; not user-customizable. Per-user color/icon customization
-(via a separate `CategoryPreference` overlay, since Category rows are shared/global) is deferred
-to a later phase — see Roadmap.
+At registration, each user gets their own cloned, translated set of categories generated from an
+internal seed template — not a reference to shared/global rows. Once cloned, a user can freely
+edit any field on any of their categories, including seeded ones (rename, recolor, re-icon,
+re-parent, or soft-delete) — there is no "system category" concept post-clone.
 
 ### FxRate
 
@@ -322,6 +324,18 @@ the fact, even if today's rate differs).
 
 ## Changelog
 
+- **2026-08-04** — `Category.key` removed entirely. *Reasoning:* its original purpose (frontend
+  maps a stable key to a runtime-localized label) belonged to the shared/global category model
+  this doc previously (and incorrectly) described. Under the confirmed user-owned model,
+  translation happens once server-side at seed time and is written directly into `name` — there's
+  no runtime frontend translation lookup for `key` to drive, and no other use for it is in scope.
+- **2026-08-04** — Category section rewritten: categories are per-user cloned rows (`user_id` FK),
+  freely editable by the owner including seeded ones — not system-provided/shared/global rows with
+  a deferred `CategoryPreference` overlay as previously stated here. *Reasoning:* this doc had
+  drifted from CLAUDE.md §5.3 and from `internal/category/model.go` (which already has `UserID` on
+  `Category`), with no changelog entry explaining the divergence — CLAUDE.md's version was
+  confirmed as the intended design, so this doc is corrected to match. No `CategoryPreference`
+  table exists in the ER diagram either, which already agreed with the user-owned model.
 - **2026-08-03** — Migrated this doc from Notion ("Requirements & Domain Model (MVP)") into the
   repo, so it can't silently drift from CLAUDE.md or the code. The Notion page now points here.
 - **2026-08-03** — `Account.color`/`Account.icon` changed from nullable to required; `icon` is now

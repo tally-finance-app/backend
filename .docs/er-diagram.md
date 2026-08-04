@@ -142,7 +142,6 @@ erDiagram
     CATEGORY {
         uuid id PK
         uuid user_id FK
-        string key
         string name
         uuid parent_category_id FK
         string type
